@@ -1,24 +1,25 @@
 use concrete_commons::parameters::GlweSize;
 
-use crate::backends::core::engines::CoreEngine;
-use crate::backends::core::entities::{
+use crate::backends::fftw::engines::FftwEngine;
+use crate::backends::fftw::entities::{
     FourierGlweCiphertext32, FourierGlweCiphertext64, GlweCiphertext32, GlweCiphertext64,
 };
-use crate::backends::core::private::crypto::bootstrap::FourierBuffers;
-use crate::backends::core::private::crypto::glwe::{
-    FourierGlweCiphertext as ImplFourierGlweCiphertext, GlweCiphertext as ImplGlweCiphertext,
+use crate::backends::fftw::private::crypto::bootstrap::FourierBuffers;
+use crate::backends::fftw::private::crypto::glwe::{
+    FourierGlweCiphertext as ImplFourierGlweCiphertext,
 };
-use crate::backends::core::private::math::fft::Complex64;
-use crate::prelude::{
-    GlweCiphertextTensorProductEngine, GlweCiphertextTensorProductError, ScalingFactor,
+use crate::commons::crypto::glwe::{
+    GlweCiphertext as ImplGlweCiphertext,
 };
+use crate::backends::fftw::private::math::fft::Complex64;
+use crate::prelude::{GlweCiphertext32, GlweCiphertext64, GlweCiphertextTensorProductEngine, GlweCiphertextTensorProductError, ScalingFactor};
 use crate::specification::entities::GlweCiphertextEntity;
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`CoreEngine`] that operates on 32-bit
+/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 32-bit
 /// integer Glwe Ciphertexts.
 impl GlweCiphertextTensorProductEngine<GlweCiphertext32, GlweCiphertext32, GlweCiphertext32>
-    for CoreEngine
+    for FftwEngine
 {
     fn tensor_product_glwe_ciphertext(
         &mut self,
@@ -85,10 +86,10 @@ impl GlweCiphertextTensorProductEngine<GlweCiphertext32, GlweCiphertext32, GlweC
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`CoreEngine`] that operates on 64-bit
+/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 64-bit
 /// integer Glwe Ciphertexts.
 impl GlweCiphertextTensorProductEngine<GlweCiphertext64, GlweCiphertext64, GlweCiphertext64>
-    for CoreEngine
+    for FftwEngine
 {
     fn tensor_product_glwe_ciphertext(
         &mut self,
@@ -154,14 +155,14 @@ impl GlweCiphertextTensorProductEngine<GlweCiphertext64, GlweCiphertext64, GlweC
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`CoreEngine`] that operates on 32-bit
+/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 32-bit
 /// integer Glwe Ciphertexts in the Fourier domain.
 impl
     GlweCiphertextTensorProductEngine<
         FourierGlweCiphertext32,
         FourierGlweCiphertext32,
         FourierGlweCiphertext32,
-    > for CoreEngine
+    > for FftwEngine
 {
     fn tensor_product_glwe_ciphertext(
         &mut self,
@@ -186,14 +187,14 @@ impl
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`CoreEngine`] that operates on 64-bit
+/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 64-bit
 /// integer Glwe Ciphertexts in the Fourier domain.
 impl
     GlweCiphertextTensorProductEngine<
         FourierGlweCiphertext64,
         FourierGlweCiphertext64,
         FourierGlweCiphertext64,
-    > for CoreEngine
+    > for FftwEngine
 {
     fn tensor_product_glwe_ciphertext(
         &mut self,

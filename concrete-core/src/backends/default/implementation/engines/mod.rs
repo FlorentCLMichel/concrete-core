@@ -10,8 +10,8 @@ use crate::commons::crypto::secret::generators::{
     EncryptionRandomGenerator as ImplEncryptionRandomGenerator,
     SecretRandomGenerator as ImplSecretRandomGenerator,
 };
-use crate::specification::engines::sealed::AbstractEngineSeal;
 use crate::specification::engines::AbstractEngine;
+use crate::specification::engines::sealed::AbstractEngineSeal;
 
 /// The error which can occur in the execution of FHE operations, due to the default implementation.
 ///
@@ -124,7 +124,6 @@ mod glwe_ciphertext_discarding_trivial_encryption;
 mod glwe_ciphertext_encryption;
 mod glwe_ciphertext_ggsw_ciphertext_discarding_external_product;
 mod glwe_ciphertext_ggsw_ciphertext_external_product;
-mod glwe_ciphertext_tensor_product;
 mod glwe_ciphertext_trivial_decryption;
 mod glwe_ciphertext_trivial_encryption;
 mod glwe_ciphertext_vector_decryption;
@@ -137,7 +136,6 @@ mod glwe_ciphertext_vector_zero_encryption;
 mod glwe_ciphertext_zero_encryption;
 mod glwe_secret_key_creation;
 mod glwe_to_lwe_secret_key_transmutation;
-mod glwe_secret_key_tensor_product;
 mod glwe_secret_key_to_lwe_secret_key_transmutation;
 mod lwe_bootstrap_key_conversion;
 mod lwe_bootstrap_key_creation;

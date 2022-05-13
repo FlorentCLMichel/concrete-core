@@ -3,20 +3,25 @@ use std::prelude::rust_2021::TryFrom;
 use concrete_commons::dispersion::Variance;
 use concrete_commons::parameters::{DecompositionBaseLog, DecompositionLevelCount};
 
-use crate::backends::core::implementation::engines::CoreEngine;
-use crate::backends::core::implementation::entities::{
-    FourierLweBootstrapKey32, FourierLweBootstrapKey64, GlweSecretKey32, GlweSecretKey64,
+use crate::backends::fftw::implementation::engines::FftwEngine;
+use crate::backends::default::implementation::entities::{
+    GlweSecretKey32, GlweSecretKey64,
     LweBootstrapKey32, LweBootstrapKey64, LweSecretKey32, LweSecretKey64,
 };
-use crate::backends::core::private::crypto::bootstrap::{
-    FourierBootstrapKey as ImplFourierBootstrapKey,
+use crate::commons::crypto::bootstrap::{
     StandardBootstrapKey as ImplStandardBootstrapKey,
 };
-use crate::backends::core::private::crypto::glwe::GlweList;
-use crate::backends::core::private::crypto::secret::{GlweSecretKey as ImplGlweSecretKey, GlweSecretKey};
-use crate::backends::core::private::math::fft::Complex64;
-use crate::backends::core::private::math::polynomial::PolynomialList;
-use crate::backends::core::private::math::tensor::{AsRefTensor, IntoTensor};
+use crate::backends::fftw::implementation::entities::{
+    FourierLweBootstrapKey32, FourierLweBootstrapKey64,
+};
+use crate::backends::fftw::private::crypto::bootstrap::{
+    FourierBootstrapKey as ImplFourierBootstrapKey,
+};
+use crate::commons::crypto::glwe::GlweList;
+use crate::commons::crypto::secret::{GlweSecretKey as ImplGlweSecretKey, GlweSecretKey};
+use crate::backends::fftw::private::math::fft::Complex64;
+use crate::commons::math::polynomial::PolynomialList;
+use crate::commons::math::tensor::{AsRefTensor, IntoTensor};
 use crate::prelude::{LweBootstrapKeyEntity, PolynomialCount, PolynomialSize};
 use crate::prelude::numeric::CastInto;
 use crate::specification::engines::{TensorProductGlweSecretKeyCreationEngine,
@@ -24,11 +29,11 @@ use crate::specification::engines::{TensorProductGlweSecretKeyCreationEngine,
 use std::fmt::rt::v1::Count::Implied;
 
 /// # Description:
-/// Implementation of [`TensorProductGlweSecretKeyCreationEngine`] for [`CoreEngine`] that operates
+/// Implementation of [`TensorProductGlweSecretKeyCreationEngine`] for [`FftwEngine`] that operates
 /// on 32 bits integers. It outputs a tensor product of the input GLWE secret keys in the standard
 /// domain.
 impl TensorProductGlweSecretKeyCreationEngine<GlweSecretKey32, GlweSecretKey32, GlweSecretKey32>
-for CoreEngine
+for FftwEngine
 {    fn create_tensor_product_glwe_secret_key(
         &mut self,
         input_key1: &GlweSecretKey32,
@@ -39,7 +44,7 @@ for CoreEngine
             input_key2,
         )?;
 
-    Ok(unsafe { self.create_tensor_product_glwe_secret_key(input_key1, input_key2)})
+    Ok(unsafe { self.create_tensor_product_glwe_secret_key_unchecked(input_key1, input_key2)})
 
 
     }
