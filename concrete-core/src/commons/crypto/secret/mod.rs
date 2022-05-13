@@ -6,3 +6,4 @@ pub mod generators;
 
 mod glwe;
 mod lwe;
+mod tensor_glwe;
