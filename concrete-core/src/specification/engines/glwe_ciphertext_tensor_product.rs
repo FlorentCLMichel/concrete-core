@@ -41,7 +41,7 @@ pub trait GlweCiphertextTensorProductEngine<InputCiphertext1, InputCiphertext2, 
 where
     InputCiphertext1: GlweCiphertextEntity,
     InputCiphertext2: GlweCiphertextEntity<KeyDistribution = InputCiphertext1::KeyDistribution>,
-    OutputCiphertext: GlweCiphertextEntity<KeyDistribution = InputCiphertext1::KeyDistribution>,
+    OutputCiphertext: GlweCiphertextEntity<KeyDistribution = TensorProductKeyDistribution>,
 {
     fn tensor_product_glwe_ciphertext(
         &mut self,
