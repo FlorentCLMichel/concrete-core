@@ -1,4 +1,4 @@
-use crate::specification::entities::markers::{GlweSecretKeyKind, KeyDistributionMarker};
+use crate::specification::entities::markers::{GlweSecretKeyKind, KeyDistributionMarker, TensorGlweSecretKeyKind};
 use crate::specification::entities::AbstractEntity;
 use concrete_commons::parameters::{GlweDimension, PolynomialSize};
 
@@ -26,4 +26,24 @@ pub trait GlweSecretKeyEntity: AbstractEntity<Kind = GlweSecretKeyKind> {
 
     /// Returns the polynomial size of the key.
     fn polynomial_size(&self) -> PolynomialSize;
+
 }
+
+/// A trait implemented by types embodying the tensor product of two GLWE secret keys.
+///
+/// A Tensor GLWE secret key is associated with a
+/// [`KeyDistribution`](`TensorGlweSecretKeyEntity::KeyDistribution`) type, which conveys the
+/// (matching) distribution of its two inputs
+///
+/// # Formal Definition
+pub trait TensorGlweSecretKeyEntity: AbstractEntity<Kind = TensorGlweSecretKeyKind> {
+    /// The distribution of the two input keys.
+    type InputKeyDistribution: KeyDistributionMarker;
+
+    /// Returns the GLWE dimension of the input keys.
+    fn glwe_dimension(&self) -> GlweDimension;
+
+    /// Returns the polynomial size of the input keys.
+    fn polynomial_size(&self) -> PolynomialSize;
+}
+

@@ -54,6 +54,8 @@ entity_kind_marker! {
             => "An empty type representing the LWE secret key kind in the type system.",
         GlweSecretKeyKind
             => "An empty type representing the GLWE secret key kind in the type system.",
+        TensorGlweSecretKeyKind
+            => "An empty type representing a tensor product GLWE secret key kind in the type system.",
         LweKeyswitchKeyKind
             => "An empty type representing the LWE keyswitch key kind in the type system.",
         PackingKeyswitchKeyKind
