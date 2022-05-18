@@ -17,6 +17,13 @@ impl Iterator for SoftwareChildrenIterator {
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(SoftwareRandomGenerator)
     }
+
+    // advance_by is unstable, the current recommendation is to implement nth to advance an iterator
+    // if the underlying generator has an efficient implementation this is better than the default
+    // nth which just calls next repeatedly
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.0.nth(n).map(SoftwareRandomGenerator)
+    }
 }
 
 impl RandomGenerator for SoftwareRandomGenerator {
@@ -43,6 +50,13 @@ impl Iterator for SoftwareRandomGenerator {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.0.next()
+    }
+
+    // advance_by is unstable, the current recommendation is to implement nth to advance an iterator
+    // if the underlying generator has an efficient implementation this is better than the default
+    // nth which just calls next repeatedly
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.0.nth(n)
     }
 }
 
