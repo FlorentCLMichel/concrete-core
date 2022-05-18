@@ -31,9 +31,15 @@ impl RandomGenerator for SoftwareRandomGenerator {
     fn new(seed: Seed) -> Self {
         SoftwareRandomGenerator(AesCtrGenerator::new(AesKey(seed.0), None, None))
     }
+
     fn remaining_bytes(&self) -> ByteCount {
         self.0.remaining_bytes()
     }
+
+    fn generated_bytes_so_far(&self) -> ByteCount {
+        self.0.generated_bytes_so_far()
+    }
+
     fn try_fork(
         &mut self,
         n_children: ChildrenCount,
