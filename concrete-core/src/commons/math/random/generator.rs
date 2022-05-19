@@ -14,6 +14,25 @@ pub use concrete_csprng::generators::ParallelRandomGenerator as ParallelByteRand
 pub use concrete_csprng::generators::RandomGenerator as ByteRandomGenerator;
 pub use concrete_csprng::seeders::{Seed, Seeder};
 
+/// Module to proxy the serialization for `concrete-csprng::Seed` to avoid adding serde as a
+/// dependency to `concrete-csprng`
+#[cfg(feature = "serde_serialize")]
+pub mod serialization_proxy {
+    use concrete_csprng::seeders::Seed;
+    use serde::{Deserialize, Serialize};
+
+    // See https://serde.rs/remote-derive.html
+    // Serde calls this the definition of the remote type. It is just a copy of the remote data
+    // structure. The `remote` attribute gives the path to the actual type we intend to derive code
+    // for. This avoids having to introduce serde in concrete-csprng
+    #[derive(Serialize, Deserialize)]
+    #[serde(remote = "Seed")]
+    pub(crate) struct SeedSerdeDef(pub u128);
+}
+
+#[cfg(feature = "serde_serialize")]
+pub(crate) use serialization_proxy::*;
+
 /// A cryptographically secure random number generator.
 ///
 /// This csprng is used by every objects that needs sampling in the library. If the proper
@@ -56,6 +75,22 @@ impl<G: ByteRandomGenerator> RandomGenerator<G> {
         self.0.next_byte().unwrap()
     }
 
+    /// Skip n bytes. Depending on the underlying implementation of the CSPRNG this may short
+    /// circuit avoiding the cost of generating n bytes.
+    ///
+    /// ```rust
+    /// use concrete_core::commons::math::random::RandomGenerator;
+    /// use concrete_csprng::generators::SoftwareRandomGenerator;
+    /// use concrete_csprng::seeders::Seed;
+    /// let mut generator = RandomGenerator::<SoftwareRandomGenerator>::new(Seed(0));
+    /// assert_eq!(generator.generated_bytes_so_far(), Some(0));
+    /// generator.shift(42);
+    /// assert_eq!(generator.generated_bytes_so_far(), Some(42));
+    /// ```
+    pub fn shift(&mut self, n: usize) {
+        self.0.shift(n).unwrap()
+    }
+
     /// Generates a new generator, optionally seeding it with the given value.
     ///
     /// # Example
@@ -85,6 +120,22 @@ impl<G: ByteRandomGenerator> RandomGenerator<G> {
     /// ```
     pub fn remaining_bytes(&self) -> Option<usize> {
         <u128 as TryInto<usize>>::try_into(self.0.remaining_bytes().0).ok()
+    }
+
+    /// Returns the number of bytes that have been generated so far if it fits in a usize. On a
+    /// fresh generator this returns 0.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use concrete_core::commons::math::random::RandomGenerator;
+    /// use concrete_csprng::generators::SoftwareRandomGenerator;
+    /// use concrete_csprng::seeders::Seed;
+    /// let mut generator = RandomGenerator::<SoftwareRandomGenerator>::new(Seed(0));
+    /// assert_eq!(generator.generated_bytes_so_far(), Some(0));
+    /// ```
+    pub fn generated_bytes_so_far(&self) -> Option<usize> {
+        <u128 as TryInto<usize>>::try_into(self.0.generated_bytes_so_far().0).ok()
     }
 
     /// Tries to fork the current generator into `n_child` generator bounded to `bytes_per_child`.
