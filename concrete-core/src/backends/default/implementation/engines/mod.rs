@@ -31,8 +31,13 @@ impl Display for DefaultError {
 impl Error for DefaultError {}
 
 pub struct DefaultEngine {
+    /// A CSPRNG to generate secret key material.
     secret_generator: ImplSecretRandomGenerator<SoftwareRandomGenerator>,
+    /// A CSPRNG to generate secret material for encryption like masks and errors.
     encryption_generator: ImplEncryptionRandomGenerator<SoftwareRandomGenerator>,
+    /// A seeder that can be called to generate 128 bits seeds, useful to create new
+    /// [`ImplEncryptionRandomGenerator`] to encrypt seeded types.
+    seeder: Box<dyn Seeder>,
 }
 
 impl AbstractEngineSeal for DefaultEngine {}
@@ -43,12 +48,17 @@ impl AbstractEngine for DefaultEngine {
     type Parameters = Box<dyn Seeder>;
 
     fn new(mut parameters: Self::Parameters) -> Result<Self, Self::EngineError> {
+        // Note that the operands are evaluated from left to right for Rust Struct expressions
+        // See: https://doc.rust-lang.org/stable/reference/expressions.html?highlight=left#evaluation-order-of-operands
+        // So parameters is moved in seeder after the calls to seed and the potential calls when it
+        // is passed as_mut in ImplEncryptionRandomGenerator::new
         Ok(DefaultEngine {
             secret_generator: ImplSecretRandomGenerator::new(parameters.seed()),
             encryption_generator: ImplEncryptionRandomGenerator::new(
                 parameters.seed(),
                 parameters.as_mut(),
             ),
+            seeder: parameters,
         })
     }
 }
@@ -173,6 +183,7 @@ mod lwe_ciphertext_vector_zero_encryption;
 mod lwe_ciphertext_zero_encryption;
 mod lwe_keyswitch_key_creation;
 mod lwe_secret_key_creation;
+mod lwe_seeded_ciphertext_encryption;
 mod lwe_to_glwe_secret_key_transmutation;
 mod packing_keyswitch_key_creation;
 mod plaintext_creation;

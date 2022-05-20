@@ -1,0 +1,68 @@
+use super::engine_error;
+
+use crate::specification::engines::AbstractEngine;
+use crate::specification::entities::{
+    LweSecretKeyEntity, LweSeededCiphertextEntity, PlaintextEntity,
+};
+use concrete_commons::dispersion::Variance;
+
+engine_error! {
+    LweSeededCiphertextEncryptionError for LweSeededCiphertextEncryptionEngine @
+}
+
+/// A trait for engines encrypting seeded LWE ciphertexts.
+///
+/// # Semantics
+///
+/// This [pure](super#operation-semantics) operation generates an LWE ciphertext containing the
+/// encryption of the `input` plaintext under the `key` secret key.
+///
+/// # Formal Definition
+///
+/// ## LWE Encryption
+/// ###### inputs:
+/// - $\mathsf{pt}\in\mathbb{Z}\_q$: a plaintext
+/// - $\vec{s}\in\mathbb{Z}\_q^n$: a secret key
+/// - $\mathsf{S}$: a public seed
+/// - $G$: a CSPRNG
+/// - $\mathcal{D\_{\sigma^2,\mu}}$: a normal distribution of variance $\sigma^2$ and a mean of
+///   $\mu$
+///
+/// ###### outputs:
+/// - $\mathsf{ct} = \left( \mathsf{S} , b\right) \in \mathsf{LWE}^n\_{\vec{s}, G}(
+///   \mathsf{pt})\subseteq (\mathbb{N}, \mathbb{Z}\_q)$: a seeded LWE ciphertext
+///
+/// ###### algorithm:
+/// 1. uniformly sample a vector with the CSPRNG seeded with $\mathsf{S}$, $G\_\mathsf{S}$:
+/// $\vec{a}\in\mathbb{Z}^n\_{q, G\_\mathsf{S}}$
+/// 2. sample an integer error term $e \hookleftarrow \mathcal{D\_{\sigma^2,\mu}}$
+/// 3. compute $b = \left\langle \vec{a} , \vec{s} \right\rangle + \mathsf{pt} + e \in\mathbb{Z}\_q$
+/// 4. output $\left( \mathsf{S} , b\right)$
+pub trait LweSeededCiphertextEncryptionEngine<SecretKey, Plaintext, Ciphertext>:
+    AbstractEngine
+where
+    SecretKey: LweSecretKeyEntity,
+    Plaintext: PlaintextEntity,
+    Ciphertext: LweSeededCiphertextEntity<KeyDistribution = SecretKey::KeyDistribution>,
+{
+    /// Encrypts a seeded LWE ciphertext.
+    fn encrypt_lwe_seeded_ciphertext(
+        &mut self,
+        key: &SecretKey,
+        input: &Plaintext,
+        noise: Variance,
+    ) -> Result<Ciphertext, LweSeededCiphertextEncryptionError<Self::EngineError>>;
+
+    /// Unsafely encrypts a seeded LWE ciphertext.
+    ///
+    /// # Safety
+    /// For the _general_ safety concerns regarding this operation, refer to the different variants
+    /// of [`LweSeededCiphertextEncryptionError`]. For safety concerns _specific_ to an
+    /// engine, refer to the implementer safety section.
+    unsafe fn encrypt_lwe_seeded_ciphertext_unchecked(
+        &mut self,
+        key: &SecretKey,
+        input: &Plaintext,
+        noise: Variance,
+    ) -> Ciphertext;
+}
