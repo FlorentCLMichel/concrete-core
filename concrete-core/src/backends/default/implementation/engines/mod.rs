@@ -184,6 +184,7 @@ mod lwe_ciphertext_zero_encryption;
 mod lwe_keyswitch_key_creation;
 mod lwe_secret_key_creation;
 mod lwe_seeded_ciphertext_encryption;
+mod lwe_seeded_to_lwe_ciphertext_transmutation;
 mod lwe_to_glwe_secret_key_transmutation;
 mod packing_keyswitch_key_creation;
 mod plaintext_creation;
