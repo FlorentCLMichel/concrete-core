@@ -417,6 +417,9 @@ pub use lwe_secret_key_creation::*;
 mod lwe_seeded_ciphertext_encryption;
 pub use lwe_seeded_ciphertext_encryption::*;
 
+mod lwe_seeded_to_lwe_ciphertext_transmutation;
+pub use lwe_seeded_to_lwe_ciphertext_transmutation::*;
+
 mod lwe_to_glwe_secret_key_transmutation;
 pub use lwe_to_glwe_secret_key_transmutation::*;
 

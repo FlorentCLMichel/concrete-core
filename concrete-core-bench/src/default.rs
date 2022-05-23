@@ -129,6 +129,7 @@ bench! {
     (LweKeyswitchKeyCreationFixture, (LweSecretKey, LweSecretKey, LweKeyswitchKey)),
     (LweSecretKeyCreationFixture, (LweSecretKey)),
     (LweSeededCiphertextEncryptionFixture, (Plaintext, LweSecretKey, LweSeededCiphertext)),
+    (LweSeededToLweCiphertextTransmutationFixture, (Plaintext, LweSecretKey, LweSeededCiphertext, LweCiphertext)),
     (LweToGlweSecretKeyTransmutationFixture, (LweSecretKey, GlweSecretKey)),
     (PlaintextCreationFixture, (Plaintext)),
     (PlaintextDiscardingRetrievalFixture, (Plaintext)),
