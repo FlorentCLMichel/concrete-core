@@ -297,8 +297,6 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
             GlweSize(k + k * (k - 1) / 2 + k),
         );
         println!("{}", output.as_tensor().len());
-        // TODO: figure out how to represent the division/multiplication by the correct scaling
-        // factor
         let iter_glwe_1 = self.polynomial_iter();
         {
             let mut iter_output = output.polynomial_iter_mut();
