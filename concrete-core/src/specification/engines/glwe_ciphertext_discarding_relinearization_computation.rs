@@ -15,7 +15,7 @@ impl<EngineError: std::error::Error> GlweCiphertextDiscardingRelinearizationErro
             // TODO: decide on the entity for the Relinearization Key (GLev cts)
             InputKey: GlweRelinearizationKeyEntity,
             // TODO: add trait bounds (using distribution/s on GlweRelinearizationKeyEntity)?
-            InputCiphertext1: GlweCiphertextEntity,
+            InputCiphertext: GlweCiphertextEntity,
     {
        // TODO: once we have the entities we need to check that e.g. the poly sizes in the GLev
        // ciphertext/s which make up the RLK are correct, etc.
