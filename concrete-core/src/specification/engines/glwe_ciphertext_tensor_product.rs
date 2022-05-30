@@ -1,16 +1,17 @@
+use crate::prelude::markers::TensorProductKeyDistribution;
 use super::engine_error;
 use crate::prelude::ScalingFactor;
 use crate::specification::engines::AbstractEngine;
 use crate::specification::entities::GlweCiphertextEntity;
 
 engine_error! {
-    GlweCiphertextTensorProductError for GlweCiphertextTensorProductEngine @
+    GlweCiphertextTensorProductSameKeyError for GlweCiphertextTensorProductSameKeyEngine @
     PolynomialSizeMismatch => "The polynomial size of the input and output GLWE ciphertexts must be\
      the same.",
     InputGlweDimensionMismatch => "The GLWE dimension of the input ciphertexts must be the same."
 }
 
-impl<EngineError: std::error::Error> GlweCiphertextTensorProductError<EngineError> {
+impl<EngineError: std::error::Error> GlweCiphertextTensorProductSameKeyError<EngineError> {
     pub fn perform_generic_checks<InputCiphertext1, InputCiphertext2>(
         input1: &InputCiphertext1,
         input2: &InputCiphertext2,
@@ -36,28 +37,28 @@ impl<EngineError: std::error::Error> GlweCiphertextTensorProductError<EngineErro
 /// the tensor product of the `input` GLWE ciphertexts.
 ///
 /// # Formal Definition
-pub trait GlweCiphertextTensorProductEngine<InputCiphertext1, InputCiphertext2, OutputCiphertext>:
+pub trait GlweCiphertextTensorProductSameKeyEngine<InputCiphertext1, InputCiphertext2, OutputCiphertext>:
     AbstractEngine
 where
     InputCiphertext1: GlweCiphertextEntity,
     InputCiphertext2: GlweCiphertextEntity<KeyDistribution = InputCiphertext1::KeyDistribution>,
     OutputCiphertext: GlweCiphertextEntity<KeyDistribution = TensorProductKeyDistribution>,
 {
-    fn tensor_product_glwe_ciphertext(
+    fn tensor_product_glwe_ciphertext_same_key(
         &mut self,
         input1: &InputCiphertext1,
         input2: &InputCiphertext2,
         scale: ScalingFactor,
-    ) -> Result<OutputCiphertext, GlweCiphertextTensorProductError<Self::EngineError>>;
+    ) -> Result<OutputCiphertext, GlweCiphertextTensorProductSameKeyError<Self::EngineError>>;
 
     /// Unsafely performs a tesnro product of two GLWE ciphertexts.
     ///
     /// # Safety
     /// For the _general_ safety concerns regarding this operation, refer to the different variants
-    /// of [`GlweCiphertextTensorProductError`]. For safety concerns _specific_ to an engine, refer
+    /// of [`GlweCiphertextTensorProductSameKeyError`]. For safety concerns _specific_ to an engine, refer
     /// to the implementer safety section.
 
-    unsafe fn tensor_product_glwe_ciphertext_unchecked(
+    unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
         &mut self,
         input1: &InputCiphertext1,
         input2: &InputCiphertext2,

@@ -1,7 +1,6 @@
 use super::engine_error;
 use crate::specification::engines::AbstractEngine;
 use crate::specification::entities::GlweSecretKeyEntity;
-use std::process::Output;
 
 engine_error! {
     TensorProductGlweSecretKeyCreationError for TensorProductGlweSecretKeyCreationEngine @
