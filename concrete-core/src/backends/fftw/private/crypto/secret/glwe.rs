@@ -5,7 +5,7 @@ use crate::commons::crypto::glwe::GlweCiphertext;
 use crate::commons::crypto::secret::GlweSecretKey;
 use crate::commons::math::tensor::{AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, Tensor};
 use crate::commons::math::torus::UnsignedTorus;
-use crate::prelude::{GlweDimension, KeyKind, PolynomialSize, TensorProductKeyKind};
+use crate::prelude::{GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind};
 
 /// A GLWE secret key in the Fourier Domain.
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
@@ -291,32 +291,25 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
             .map(FourierPolynomial::from_tensor)
     }
 
-    pub fn create_tensor_product_key<GlweCont1, GlweCont2>(
+    pub fn create_tensor_product_key<OutputCont>(
         &mut self,
-        glwe_secret_key: &GlweSecretKey<Kind, GlweCont1>,
-    ) -> GlweSecretKey<TensorProductKeyKind, GlweCont2>
+    ) -> GlweSecretKey<TensorProductKeyKind, OutputCont>
         where
             Self: AsRefTensor<Element=Scalar>,
-            GlweSecretKey<Kind, GlweCont1>: AsRefTensor<Element=Scalar>,
     {
-        ck_dim_eq!(self.key_size().0 => glwe_secret_key.key_size().0);
-        ck_dim_eq!(self.polynomial_size().0 => glwe_secret_key.polynomial_size().0);
-
         // .0 accesses the inner value, i.e. the underlying key wrapped in the GlweSecretKey32
         let input_list_1 = self.0.as_polynomial_list();
-        let input_list_2 = glwe_secret_key.0.as_polynomial_list();
+        let input_list_2 = self.0.as_polynomial_list();
 
         // TODO do the conversions to the Fourier domain and back like the tensor product on 
         // ciphertexts
         
-        // TODO do the allocation in the implementation
-        //let mut output_list = PolynomialList::allocate(0 as u32,
-        //                                               PolynomialCount(glwe_secret_key.0
-        //                                                   .polynomial_size().0),
-        //                                               glwe_secret_key.0.polynomial_size());
-        let mut output_list = tensor_glwe_secret_key.0.as_mut_polynomial_list();
+        // TODO check allocation size
+        let mut output_list = PolynomialList::allocate(0 as u32,
+                                                       PolynomialCount(glwe_secret_key.0
+                                                           .polynomial_size().0),
+                                                       glwe_secret_key.0.polynomial_size());
 
-        // create iterators over the two polynomial lists, as well as an output
         {
             let mut iter_output = output_list.polynomial_iter_mut();
 
@@ -329,6 +322,7 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
                 }
             }
         }
+        // TODO match against the key kind
         let tensor_key =
             GlweSecretKey::binary_from_container(output_list.as_tensor().as_slice().to_vec(),
                                                  glwe_secret_key.0.polynomial_size());

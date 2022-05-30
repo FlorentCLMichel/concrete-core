@@ -29,7 +29,7 @@ impl<EngineError: std::error::Error> GlweCiphertextTensorProductSameKeyError<Eng
         Ok(())
     }
 }
-/// A trait for engines multiplying GLWE ciphertexts.
+/// A trait for engines multiplying GLWE ciphertexts **encrypted with the SAME KEY**.
 ///
 /// # Semantics
 ///
@@ -37,6 +37,7 @@ impl<EngineError: std::error::Error> GlweCiphertextTensorProductSameKeyError<Eng
 /// the tensor product of the `input` GLWE ciphertexts.
 ///
 /// # Formal Definition
+/// // TODO add documentation
 pub trait GlweCiphertextTensorProductSameKeyEngine<InputCiphertext1, InputCiphertext2, OutputCiphertext>:
     AbstractEngine
 where
@@ -51,13 +52,12 @@ where
         scale: ScalingFactor,
     ) -> Result<OutputCiphertext, GlweCiphertextTensorProductSameKeyError<Self::EngineError>>;
 
-    /// Unsafely performs a tesnro product of two GLWE ciphertexts.
+    /// Unsafely performs a tesnro product of two GLWE ciphertexts **encrypted with the SAME KEY**.
     ///
     /// # Safety
     /// For the _general_ safety concerns regarding this operation, refer to the different variants
     /// of [`GlweCiphertextTensorProductSameKeyError`]. For safety concerns _specific_ to an engine, refer
     /// to the implementer safety section.
-
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
         &mut self,
         input1: &InputCiphertext1,

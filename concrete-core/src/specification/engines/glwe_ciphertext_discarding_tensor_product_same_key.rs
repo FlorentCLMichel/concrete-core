@@ -39,14 +39,16 @@ impl<EngineError: std::error::Error> GlweCiphertextDiscardingTensorProductSameKe
     }
 }
 
-/// A trait for engines performing a (discarding) tensor product on GLWE ciphertexts.
+/// A trait for engines performing a (discarding) tensor product on GLWE ciphertexts encrypted 
+/// using the exact same key.
 ///
 /// # Semantics
 ///
 /// This [discarding](super#operation-semantics) operation fills the `output` GLWE ciphertext with
-/// the tensor product of the `input` GLWE ciphertexts.
+/// the tensor product of the `input` GLWE ciphertexts encrypted using the exact same key.
 ///
 /// # Formal Definition
+/// // TODO add link to the pure operation documentation
 pub trait GlweCiphertextDiscardingTensorProductSameKeyEngine<
     InputCiphertext1,
     InputCiphertext2,
@@ -64,7 +66,8 @@ pub trait GlweCiphertextDiscardingTensorProductSameKeyEngine<
         scale: ScalingFactor,
     ) -> Result<(), GlweCiphertextDiscardingTensorProductSameKeyError<Self::EngineError>>;
 
-    /// Unsafely performs a discarding tensor product of two GLWE ciphertexts.
+    /// Unsafely performs a discarding tensor product of two GLWE ciphertexts encrypted using the
+    /// exact same key.
     ///
     /// # Safety
     /// For the _general_ safety concerns regarding this operation, refer to the different variants

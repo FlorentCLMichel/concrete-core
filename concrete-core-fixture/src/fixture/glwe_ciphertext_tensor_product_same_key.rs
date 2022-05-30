@@ -8,45 +8,38 @@ use crate::raw::generation::RawUnsignedIntegers;
 use crate::raw::statistical_test::assert_noise_distribution;
 use concrete_commons::dispersion::Variance;
 use concrete_commons::parameters::{GlweDimension, PolynomialSize};
-use concrete_core::prelude::markers::{
-    BinaryKeyDistribution, GaussianKeyDistribution, KeyDistributionMarker, TernaryKeyDistribution,
-};
 use concrete_core::prelude::numeric::{CastInto, UnsignedInteger};
-use concrete_core::prelude::{
-    BinaryKeyKind, DispersionParameter, GaussianKeyKind, GlweCiphertextEntity,
-    GlweCiphertextTensorProductSameKeyEngine, ScalingFactor, TernaryKeyKind,
-};
+use concrete_core::prelude::{BinaryKeyKind, DispersionParameter, GaussianKeyKind, GlweCiphertextEntity, GlweCiphertextTensorProductSameKeyEngine, ScalingFactor, TernaryKeyKind};
 use std::any::TypeId;
+use concrete_core::prelude::markers::{BinaryKeyDistribution, GaussianKeyDistribution, KeyDistributionMarker, TensorProductKeyDistribution, TernaryKeyDistribution};
 
-/// A fixture for the types implementing the `GlweCiphertextTensorProductEngine` trait.
-pub struct GlweCiphertextTensorProductFixture;
+/// A fixture for the types implementing the `GlweCiphertextTensorProductSameKeyEngine` trait.
+pub struct GlweCiphertextTensorProductSameKeyFixture;
 
 #[derive(Debug)]
-pub struct GlweCiphertextTensorProductParameters {
+pub struct GlweCiphertextTensorProductSameKeyParameters {
     pub polynomial_size: PolynomialSize,
     pub glwe_dimension: GlweDimension,
-    pub noise_glwe_1: Variance,
-    pub noise_glwe_2: Variance,
-    pub scaling_factor_1: ScalingFactor,
-    pub scaling_factor_2: ScalingFactor,
-    pub msg_bound_1: f64,
-    pub msg_bound_2: f64,
+    pub noise: Variance,
+    pub scaling_factor: ScalingFactor,
+    pub msg_bound: f64,
+    pub msg_n_msb: usize,
 }
 
 impl<Precision, Engine, CiphertextIn1, CiphertextIn2, CiphertextOut>
     Fixture<Precision, Engine, (CiphertextIn1, CiphertextIn2, CiphertextOut)>
-    for GlweCiphertextTensorProductFixture
+    for GlweCiphertextTensorProductSameKeyFixture
 where
     Precision: IntegerPrecision,
     Engine: GlweCiphertextTensorProductSameKeyEngine<CiphertextIn1, CiphertextIn2, CiphertextOut>,
     CiphertextIn1: GlweCiphertextEntity,
     CiphertextIn2: GlweCiphertextEntity<KeyDistribution = CiphertextIn1::KeyDistribution>,
-    CiphertextOut: GlweCiphertextEntity<KeyDistribution = CiphertextIn1::KeyDistribution>,
+    CiphertextOut: GlweCiphertextEntity<KeyDistribution = TensorProductKeyDistribution>,
     Maker: SynthesizesGlweCiphertext<Precision, CiphertextIn1>
         + SynthesizesGlweCiphertext<Precision, CiphertextIn2>
         + SynthesizesGlweCiphertext<Precision, CiphertextOut>,
 {
-    type Parameters = GlweCiphertextTensorProductParameters;
+    type Parameters = GlweCiphertextTensorProductSameKeyParameters;
     type RepetitionPrototypes = (
         <Maker as PrototypesPlaintextVector<Precision>>::PlaintextVectorProto,
         <Maker as PrototypesPlaintextVector<Precision>>::PlaintextVectorProto,
@@ -66,25 +59,21 @@ where
     fn generate_parameters_iterator() -> Box<dyn Iterator<Item = Self::Parameters>> {
         Box::new(
             vec![
-                GlweCiphertextTensorProductParameters {
-                    noise_glwe_1: Variance(0.00000001),
-                    noise_glwe_2: Variance(0.00000001),
-                    scaling_factor_1: ScalingFactor(16_u64),
-                    scaling_factor_2: ScalingFactor(16_u64),
-                    msg_bound_1: 4_f64,
-                    msg_bound_2: 4_f64,
+                GlweCiphertextTensorProductSameKeyParameters {
+                    noise: Variance(0.00000001),
+                    scaling_factor: ScalingFactor(16_u64),
+                    msg_bound: 4_f64,
                     glwe_dimension: GlweDimension(200),
                     polynomial_size: PolynomialSize(256),
+                    msg_n_msb: 5,
                 },
-                GlweCiphertextTensorProductParameters {
-                    noise_glwe_1: Variance(0.00000001),
-                    noise_glwe_2: Variance(0.00000001),
-                    scaling_factor_1: ScalingFactor(16_u64),
-                    scaling_factor_2: ScalingFactor(16_u64),
-                    msg_bound_1: 4_f64,
-                    msg_bound_2: 4_f64,
+                GlweCiphertextTensorProductSameKeyParameters {
+                    noise: Variance(0.00000001),
+                    scaling_factor: ScalingFactor(16_u64),
+                    msg_bound: 4_f64,
                     glwe_dimension: GlweDimension(1),
                     polynomial_size: PolynomialSize(256),
+                    msg_n_msb: 5,
                 },
             ]
             .into_iter(),
@@ -97,13 +86,12 @@ where
     ) -> Self::RepetitionPrototypes {
         let proto_secret_key =
             maker.new_glwe_secret_key(parameters.glwe_dimension, parameters.polynomial_size);
-        // TODO make 5 more generic
         let raw_plaintext_vector =
-            Precision::Raw::uniform_n_msb_vec(5, parameters.polynomial_size.0);
+            Precision::Raw::uniform_n_msb_vec(parameters.msg_n_msb, parameters.polynomial_size.0);
         let proto_plaintext_vector1 =
             maker.transform_raw_vec_to_plaintext_vector(raw_plaintext_vector.as_slice());
         let raw_plaintext_vector =
-            Precision::Raw::uniform_n_msb_vec(5, parameters.polynomial_size.0);
+            Precision::Raw::uniform_n_msb_vec(parameters.msg_n_msb, parameters.polynomial_size.0);
         let proto_plaintext_vector2 =
             maker.transform_raw_vec_to_plaintext_vector(raw_plaintext_vector.as_slice());
         (
@@ -143,7 +131,6 @@ where
         let ciphertext1 = maker.synthesize_glwe_ciphertext(proto_ciphertext1);
         let ciphertext2 = maker.synthesize_glwe_ciphertext(proto_ciphertext2);
 
-        // TODO: we need to update scale to use the correct value
         (ciphertext1, ciphertext2)
     }
 
