@@ -1,10 +1,10 @@
-use crate::prelude::markers::TensorProductKeyDistribution;
 use super::engine_error;
+use crate::prelude::markers::TensorProductKeyDistribution;
 use crate::specification::engines::AbstractEngine;
 use crate::specification::entities::GlweSecretKeyEntity;
 
 engine_error! {
-    GlweSecretKeyDiscardingTensorProductSameKeyError for 
+    GlweSecretKeyDiscardingTensorProductSameKeyError for
     GlweSecretKeyDiscardingTensorProductSameKeyEngine @
     PolynomialSizeMismatch => "The polynomial size of the input and the output is not the same",
     GlweDimensionMismatch => "The GLWE dimension of the output is incorrect"
@@ -19,8 +19,7 @@ impl<EngineError: std::error::Error> GlweSecretKeyDiscardingTensorProductSameKey
         InputKey: GlweSecretKeyEntity,
         OutputKey: GlweSecretKeyEntity<KeyDistribution = TensorProductKeyDistribution>,
     {
-        if input.polynomial_size().0 != output.polynomial_size().0
-        {
+        if input.polynomial_size().0 != output.polynomial_size().0 {
             return Err(Self::PolynomialSizeMismatch);
         }
         if 2 * output.glwe_dimension().0

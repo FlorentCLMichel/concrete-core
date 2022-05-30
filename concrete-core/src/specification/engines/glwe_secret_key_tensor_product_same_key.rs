@@ -3,7 +3,7 @@ use crate::specification::engines::AbstractEngine;
 use crate::specification::entities::GlweSecretKeyEntity;
 
 engine_error! {
-    GlweSecretKeyTensorProductSameKeyError for 
+    GlweSecretKeyTensorProductSameKeyError for
     GlweSecretKeyTensorProductSameKeyEngine @
 }
 

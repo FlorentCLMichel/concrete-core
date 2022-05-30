@@ -6,11 +6,11 @@ use crate::backends::fftw::private::crypto::bootstrap::FourierBuffers;
 use crate::backends::fftw::private::math::fft::{Complex64, FourierPolynomial};
 use crate::commons::crypto::glwe::GlweCiphertext;
 use crate::commons::math::tensor::{
-    ck_dim_div, AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, IntoTensor, Tensor,
+    ck_dim_div, ck_dim_eq, AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, IntoTensor, Tensor,
 };
 use crate::commons::math::torus::UnsignedTorus;
-use concrete_commons::parameters::{GlweSize, PolynomialSize};
 use crate::prelude::ScalingFactor;
+use concrete_commons::parameters::{GlweSize, PolynomialSize};
 
 /// A GLWE ciphertext in the Fourier Domain.
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
@@ -70,8 +70,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     /// assert_eq!(glwe.polynomial_size(), PolynomialSize(10));
     /// ```
     pub fn from_container(cont: Cont, glwe_size: GlweSize, poly_size: PolynomialSize) -> Self
-        where
-            Cont: AsRefSlice,
+    where
+        Cont: AsRefSlice,
     {
         let tensor = Tensor::from_container(cont);
         ck_dim_div!(tensor.len() => glwe_size.0, poly_size.0);
@@ -222,8 +222,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     pub fn polynomial_iter(
         &self,
     ) -> impl Iterator<Item = FourierPolynomial<&[<Self as AsRefTensor>::Element]>>
-        where
-            Self: AsRefTensor,
+    where
+        Self: AsRefTensor,
     {
         self.as_tensor()
             .subtensor_iter(self.poly_size.0)
@@ -256,8 +256,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     pub fn polynomial_iter_mut(
         &mut self,
     ) -> impl Iterator<Item = FourierPolynomial<&mut [<Self as AsMutTensor>::Element]>>
-        where
-            Self: AsMutTensor,
+    where
+        Self: AsMutTensor,
     {
         let chunks_size = self.poly_size.0;
         self.as_mut_tensor()
@@ -266,15 +266,14 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     }
 
     /// Returns the tensor product of two Fourier GLWE ciphertexts
-    ///
     pub fn tensor_product_same_key_fourier_input<Container>(
         &self,
         glwe: &FourierGlweCiphertext<Container, Scalar>,
         scale: ScalingFactor,
     ) -> FourierGlweCiphertext<AlignedVec<Complex64>, Scalar>
-        where
-            Self: AsRefTensor<Element = Complex64>,
-            FourierGlweCiphertext<Container, Scalar>: AsRefTensor<Element = Complex64>,
+    where
+        Self: AsRefTensor<Element = Complex64>,
+        FourierGlweCiphertext<Container, Scalar>: AsRefTensor<Element = Complex64>,
     {
         // We check that the polynomial sizes match
         ck_dim_eq!(
@@ -289,16 +288,13 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
             self.glwe_size()
         );
 
-
         let k = self.glwe_size().0;
 
         // create an output FourierGLWECiphertext of the correct size
         let mut output = FourierGlweCiphertext::allocate(
             Complex64::new(0., 0.),
             self.poly_size,
-            GlweSize(
-                k + k * (k-1)/2 + k ,
-            ),
+            GlweSize(k + k * (k - 1) / 2 + k),
         );
         println!("{}", output.as_tensor().len());
         // TODO: figure out how to represent the division/multiplication by the correct scaling
@@ -329,12 +325,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
                         output_poly2.update_with_two_multiply_accumulate(
                             &polynomial1,
                             // TODO: make sure that this index is correct, should be [-1]
-                            &iter_glwe_2_
-                                .next()
-                                .unwrap(),
-                            &iter_glwe_1_
-                                .next()
-                                .unwrap(),
+                            &iter_glwe_2_.next().unwrap(),
+                            &iter_glwe_1_.next().unwrap(),
                             &polynomial2,
                         );
                     } else {
@@ -369,8 +361,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
         scale: ScalingFactor,
         mut buffers: &mut FourierBuffers<Scalar>,
     ) -> GlweCiphertext<Vec<Scalar>>
-        where
-            Self: AsRefTensor<Element = Complex64>,
+    where
+        Self: AsRefTensor<Element = Complex64>,
     {
         // We check that the polynomial sizes match
         ck_dim_eq!(
@@ -390,21 +382,19 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
             self.polynomial_size(),
             GlweSize(self.glwe_dimension().0 * (3 + self.glwe_dimension().0) * (1 / 2)),
         );
-        let mut fourier_2 = ImplFourierGlweCiphertext::allocate(
+        let mut fourier_2 = FourierGlweCiphertext::allocate(
             Complex64::new(0., 0.),
             self.polynomial_size(),
             GlweSize(self.glwe_dimension().0),
         );
-        fourier_2.fill_with_forward_fourier(&input2.0, &mut buffers);
+        fourier_2.fill_with_forward_fourier(&glwe.0, &mut buffers);
         let mut fourier_output = self.tensor_product_same_key_fourier_input(&fourier_2, scale);
 
         // convert the result back to the coefficient domain
         fourier_output.fill_with_backward_fourier(&mut output, &mut buffers);
         // return the output
         output
-
     }
-
 }
 
 impl<Element, Cont, Scalar> AsRefTensor for FourierGlweCiphertext<Cont, Scalar>

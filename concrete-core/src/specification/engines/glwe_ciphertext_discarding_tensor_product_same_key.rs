@@ -11,7 +11,9 @@ engine_error! {
     OutputGlweDimensionMismatch => "The GLWE dimension of the output ciphertext is incorrect"
 }
 
-impl<EngineError: std::error::Error> GlweCiphertextDiscardingTensorProductSameKeyError<EngineError> {
+impl<EngineError: std::error::Error>
+    GlweCiphertextDiscardingTensorProductSameKeyError<EngineError>
+{
     pub fn perform_generic_checks<InputCiphertext1, InputCiphertext2, OutputCiphertext>(
         input1: &InputCiphertext1,
         input2: &InputCiphertext2,
@@ -39,7 +41,7 @@ impl<EngineError: std::error::Error> GlweCiphertextDiscardingTensorProductSameKe
     }
 }
 
-/// A trait for engines performing a (discarding) tensor product on GLWE ciphertexts encrypted 
+/// A trait for engines performing a (discarding) tensor product on GLWE ciphertexts encrypted
 /// using the exact same key.
 ///
 /// # Semantics
@@ -71,8 +73,8 @@ pub trait GlweCiphertextDiscardingTensorProductSameKeyEngine<
     ///
     /// # Safety
     /// For the _general_ safety concerns regarding this operation, refer to the different variants
-    /// of [`GlweCiphertextDiscardingTensorProductSameKeyError`]. For safety concerns _specific_ to an
-    /// engine, refer to the implementer safety section.
+    /// of [`GlweCiphertextDiscardingTensorProductSameKeyError`]. For safety concerns _specific_ to
+    /// an engine, refer to the implementer safety section.
 
     unsafe fn discard_tensor_product_glwe_ciphertext_same_key_unchecked(
         &mut self,

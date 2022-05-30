@@ -1,23 +1,25 @@
-use std::marker::PhantomData;
 use crate::backends::fftw::private::crypto::bootstrap::FourierBuffers;
 use crate::backends::fftw::private::math::fft::{AlignedVec, Complex64, FourierPolynomial};
 use crate::commons::crypto::glwe::GlweCiphertext;
 use crate::commons::crypto::secret::GlweSecretKey;
 use crate::commons::math::tensor::{AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, Tensor};
 use crate::commons::math::torus::UnsignedTorus;
-use crate::prelude::{GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind};
+use crate::prelude::{
+    GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind,
+};
+use std::marker::PhantomData;
 
 /// A GLWE secret key in the Fourier Domain.
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FourierGlweSecretKey<Kind, Cont, Scalar>
-    where
-    Kind: KeyKind, 
+where
+    Kind: KeyKind,
 {
     tensor: Tensor<Cont>,
     pub poly_size: PolynomialSize,
-    pub kind: PhantomData<Kind>,
-    _scalar: std::marker::PhantomData<Scalar>,
+    _kind: PhantomData<Kind>,
+    _scalar: PhantomData<Scalar>,
 }
 
 impl<Kind, Scalar> FourierGlweSecretKey<Kind, AlignedVec<Complex64>, Scalar> {
@@ -30,23 +32,28 @@ impl<Kind, Scalar> FourierGlweSecretKey<Kind, AlignedVec<Complex64>, Scalar> {
     /// use concrete_core::backends::fftw::private::crypto::secret::FourierGlweSecretKey;
     /// use concrete_core::backends::fftw::private::math::fft::Complex64;
     /// use concrete_core::prelude::BinaryKeyKind;
-    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
-    ///     FourierGlweSecretKey::allocate(Complex64::new(0., 0.), PolynomialSize(10), GlweDimension
-    /// (7));
+    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> = FourierGlweSecretKey::allocate(
+    ///     Complex64::new(0., 0.),
+    ///     PolynomialSize(10),
+    ///     GlweDimension(7),
+    /// );
     /// assert_eq!(glwe.glwe_dimension(), GlweDimension(7));
     /// assert_eq!(glwe.polynomial_size(), PolynomialSize(10));
     /// ```
-    pub fn allocate(value: Complex64, poly_size: PolynomialSize, glwe_dimension: GlweDimension) -> 
-                                                                                              Self
-        where
-            Scalar: Copy,
+    pub fn allocate(
+        value: Complex64,
+        poly_size: PolynomialSize,
+        glwe_dimension: GlweDimension,
+    ) -> Self
+    where
+        Scalar: Copy,
     {
         let mut tensor = Tensor::from_container(AlignedVec::new(glwe_dimension.0 * poly_size.0));
         tensor.as_mut_tensor().fill_with_element(value);
         FourierGlweSecretKey {
             tensor,
             poly_size,
-            kind: Kind,
+            _kind: Default::default(),
             _scalar: Default::default(),
         }
     }
@@ -63,26 +70,29 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::backends::fftw::private::math::fft::Complex64;
     /// use concrete_core::prelude::BinaryKeyKind;
     ///
-    /// let glwe_key: FourierGlweSecretKey<BinaryKeyKind, _, u32> = 
-    /// FourierGlweSecretKey::from_container(
-    ///     vec![Complex64::new(0., 0.); 7 * 10],
-    ///     GlweDimension(7),
-    ///     PolynomialSize(10),
-    /// );
+    /// let glwe_key: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
+    ///     FourierGlweSecretKey::from_container(
+    ///         vec![Complex64::new(0., 0.); 7 * 10],
+    ///         GlweDimension(7),
+    ///         PolynomialSize(10),
+    ///     );
     /// assert_eq!(glwe.glwe_dimension(), GlweDimension(7));
     /// assert_eq!(glwe.polynomial_size(), PolynomialSize(10));
     /// ```
-    pub fn from_container(cont: Cont, glwe_dimension: GlweDimension, poly_size: PolynomialSize) -> 
-                                                                                              Self
-        where
-            Cont: AsRefSlice,
+    pub fn from_container(
+        cont: Cont,
+        glwe_dimension: GlweDimension,
+        poly_size: PolynomialSize,
+    ) -> Self
+    where
+        Cont: AsRefSlice,
     {
         let tensor = Tensor::from_container(cont);
         ck_dim_div!(tensor.len() => glwe_dimension().0, poly_size.0);
         FourierGlweSecretKey {
             tensor,
             poly_size,
-            kind: Kind,
+            _kind: Default::default(),
             _scalar: Default::default(),
         }
     }
@@ -97,8 +107,11 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::backends::fftw::private::math::fft::Complex64;
     /// use concrete_core::prelude::BinaryKeyKind;
     ///
-    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
-    ///     FourierGlweSecretKey::allocate(Complex64::new(0., 0.), PolynomialSize(10), GlweDimension(7));
+    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> = FourierGlweSecretKey::allocate(
+    ///     Complex64::new(0., 0.),
+    ///     PolynomialSize(10),
+    ///     GlweDimension(7),
+    /// );
     /// assert_eq!(glwe.glwe_dimension(), GlweDimension(7));
     /// ```
     pub fn glwe_dimension(&self) -> GlweDimension {
@@ -115,9 +128,11 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::backends::fftw::private::math::fft::Complex64;
     /// use concrete_core::prelude::BinaryKeyKind;
     ///
-    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
-    ///     FourierGlweSecretKey::allocate(Complex64::new(0., 0.), PolynomialSize(10), GlweDimension
-    /// (7));
+    /// let glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> = FourierGlweSecretKey::allocate(
+    ///     Complex64::new(0., 0.),
+    ///     PolynomialSize(10),
+    ///     GlweDimension(7),
+    /// );
     /// assert_eq!(glwe.polynomial_size(), PolynomialSize(10));
     /// ```
     pub fn polynomial_size(&self) -> PolynomialSize {
@@ -137,7 +152,11 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::commons::math::random::Seed;
     /// use concrete_core::prelude::BinaryKeyKind;
     /// let mut fourier_glwe_key: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
-    ///     FourierGlweSecretKey::allocate(Complex64::new(0., 0.), PolynomialSize(128), GlweDimension(7));
+    ///     FourierGlweSecretKey::allocate(
+    ///         Complex64::new(0., 0.),
+    ///         PolynomialSize(128),
+    ///         GlweDimension(7),
+    ///     );
     ///
     /// let mut buffers = FourierBuffers::new(fourier_glwe_key.poly_size, fourier_glwe_key.glwe_size);
     ///
@@ -185,7 +204,11 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::prelude::BinaryKeyKind;
     ///
     /// let mut fourier_glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
-    ///     FourierGlweSecretKey::allocate(Complex64::new(0., 0.), PolynomialSize(128), GlweDimension(7));
+    ///     FourierGlweSecretKey::allocate(
+    ///         Complex64::new(0., 0.),
+    ///         PolynomialSize(128),
+    ///         GlweDimension(7),
+    ///     );
     ///
     /// let mut buffers = FourierBuffers::new(fourier_glwe.poly_size, fourier_glwe.glwe_size);
     /// let mut buffers_out = FourierBuffers::new(fourier_glwe.poly_size, fourier_glwe.glwe_size);
@@ -248,8 +271,8 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     pub fn polynomial_iter(
         &self,
     ) -> impl Iterator<Item = FourierPolynomial<&[<Self as AsRefTensor>::Element]>>
-        where
-            Self: AsRefTensor,
+    where
+        Self: AsRefTensor,
     {
         self.as_tensor()
             .subtensor_iter(self.poly_size.0)
@@ -282,8 +305,8 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     pub fn polynomial_iter_mut(
         &mut self,
     ) -> impl Iterator<Item = FourierPolynomial<&mut [<Self as AsMutTensor>::Element]>>
-        where
-            Self: AsMutTensor,
+    where
+        Self: AsMutTensor,
     {
         let chunks_size = self.poly_size.0;
         self.as_mut_tensor()
@@ -294,21 +317,22 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     pub fn create_tensor_product_key<OutputCont>(
         &mut self,
     ) -> GlweSecretKey<TensorProductKeyKind, OutputCont>
-        where
-            Self: AsRefTensor<Element=Scalar>,
+    where
+        Self: AsRefTensor<Element = Scalar>,
     {
         // .0 accesses the inner value, i.e. the underlying key wrapped in the GlweSecretKey32
         let input_list_1 = self.0.as_polynomial_list();
         let input_list_2 = self.0.as_polynomial_list();
 
-        // TODO do the conversions to the Fourier domain and back like the tensor product on 
-        // ciphertexts
-        
+        // TODO do the conversions to the Fourier domain and back like the tensor product on
+        //   ciphertexts
+
         // TODO check allocation size
-        let mut output_list = PolynomialList::allocate(0 as u32,
-                                                       PolynomialCount(glwe_secret_key.0
-                                                           .polynomial_size().0),
-                                                       glwe_secret_key.0.polynomial_size());
+        let mut output_list = PolynomialList::allocate(
+            0 as u32,
+            PolynomialCount(glwe_secret_key.0.polynomial_size().0),
+            glwe_secret_key.0.polynomial_size(),
+        );
 
         {
             let mut iter_output = output_list.polynomial_iter_mut();
@@ -323,9 +347,10 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
             }
         }
         // TODO match against the key kind
-        let tensor_key =
-            GlweSecretKey::binary_from_container(output_list.as_tensor().as_slice().to_vec(),
-                                                 glwe_secret_key.0.polynomial_size());
+        let tensor_key = GlweSecretKey::binary_from_container(
+            output_list.as_tensor().as_slice().to_vec(),
+            glwe_secret_key.0.polynomial_size(),
+        );
 
         GlweSecretKey(tensor_key)
     }

@@ -8,10 +8,16 @@ use crate::raw::generation::RawUnsignedIntegers;
 use crate::raw::statistical_test::assert_noise_distribution;
 use concrete_commons::dispersion::Variance;
 use concrete_commons::parameters::{GlweDimension, PolynomialSize};
+use concrete_core::prelude::markers::{
+    BinaryKeyDistribution, GaussianKeyDistribution, KeyDistributionMarker,
+    TensorProductKeyDistribution, TernaryKeyDistribution,
+};
 use concrete_core::prelude::numeric::{CastInto, UnsignedInteger};
-use concrete_core::prelude::{BinaryKeyKind, DispersionParameter, GaussianKeyKind, GlweCiphertextEntity, GlweCiphertextTensorProductSameKeyEngine, ScalingFactor, TernaryKeyKind};
+use concrete_core::prelude::{
+    BinaryKeyKind, DispersionParameter, GaussianKeyKind, GlweCiphertextEntity,
+    GlweCiphertextTensorProductSameKeyEngine, ScalingFactor, TernaryKeyKind,
+};
 use std::any::TypeId;
-use concrete_core::prelude::markers::{BinaryKeyDistribution, GaussianKeyDistribution, KeyDistributionMarker, TensorProductKeyDistribution, TernaryKeyDistribution};
 
 /// A fixture for the types implementing the `GlweCiphertextTensorProductSameKeyEngine` trait.
 pub struct GlweCiphertextTensorProductSameKeyFixture;

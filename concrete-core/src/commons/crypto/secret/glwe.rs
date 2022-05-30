@@ -14,10 +14,10 @@ use crate::commons::math::polynomial::PolynomialList;
 use crate::commons::math::random::ParallelByteRandomGenerator;
 use crate::commons::math::random::{ByteRandomGenerator, Gaussian, RandomGenerable};
 use crate::commons::math::torus::UnsignedTorus;
-use concrete_commons::dispersion::DispersionParameter;
 use crate::prelude::key_kinds::{
-    BinaryKeyKind, GaussianKeyKind, KeyKind, TernaryKeyKind, UniformKeyKind, TensorProductKeyKind,
+    BinaryKeyKind, GaussianKeyKind, KeyKind, TernaryKeyKind, UniformKeyKind,
 };
+use concrete_commons::dispersion::DispersionParameter;
 use concrete_commons::numeric::Numeric;
 use concrete_commons::parameters::{GlweDimension, PlaintextCount, PolynomialSize};
 #[cfg(feature = "parallel")]

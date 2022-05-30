@@ -26,5 +26,4 @@ pub trait GlweSecretKeyEntity: AbstractEntity<Kind = GlweSecretKeyKind> {
 
     /// Returns the polynomial size of the key.
     fn polynomial_size(&self) -> PolynomialSize;
-
 }

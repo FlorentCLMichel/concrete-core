@@ -1,5 +1,5 @@
-use crate::prelude::markers::TensorProductKeyDistribution;
 use super::engine_error;
+use crate::prelude::markers::TensorProductKeyDistribution;
 use crate::prelude::ScalingFactor;
 use crate::specification::engines::AbstractEngine;
 use crate::specification::entities::GlweCiphertextEntity;
@@ -38,9 +38,11 @@ impl<EngineError: std::error::Error> GlweCiphertextTensorProductSameKeyError<Eng
 ///
 /// # Formal Definition
 /// // TODO add documentation
-pub trait GlweCiphertextTensorProductSameKeyEngine<InputCiphertext1, InputCiphertext2, OutputCiphertext>:
-    AbstractEngine
-where
+pub trait GlweCiphertextTensorProductSameKeyEngine<
+    InputCiphertext1,
+    InputCiphertext2,
+    OutputCiphertext,
+>: AbstractEngine where
     InputCiphertext1: GlweCiphertextEntity,
     InputCiphertext2: GlweCiphertextEntity<KeyDistribution = InputCiphertext1::KeyDistribution>,
     OutputCiphertext: GlweCiphertextEntity<KeyDistribution = TensorProductKeyDistribution>,
@@ -56,8 +58,8 @@ where
     ///
     /// # Safety
     /// For the _general_ safety concerns regarding this operation, refer to the different variants
-    /// of [`GlweCiphertextTensorProductSameKeyError`]. For safety concerns _specific_ to an engine, refer
-    /// to the implementer safety section.
+    /// of [`GlweCiphertextTensorProductSameKeyError`]. For safety concerns _specific_ to an engine,
+    /// refer to the implementer safety section.
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
         &mut self,
         input1: &InputCiphertext1,

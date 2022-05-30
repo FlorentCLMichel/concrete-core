@@ -10,8 +10,8 @@ use crate::commons::crypto::secret::generators::{
     EncryptionRandomGenerator as ImplEncryptionRandomGenerator,
     SecretRandomGenerator as ImplSecretRandomGenerator,
 };
-use crate::specification::engines::AbstractEngine;
 use crate::specification::engines::sealed::AbstractEngineSeal;
+use crate::specification::engines::AbstractEngine;
 
 /// The error which can occur in the execution of FHE operations, due to the default implementation.
 ///
@@ -62,8 +62,8 @@ pub mod parallel {
     use concrete_csprng::seeders::Seeder;
 
     use crate::commons::crypto::secret::generators::EncryptionRandomGenerator as ImplEncryptionRandomGenerator;
-    use crate::specification::engines::AbstractEngine;
     use crate::specification::engines::sealed::AbstractEngineSeal;
+    use crate::specification::engines::AbstractEngine;
 
     /// The error which can occur in the execution of FHE operations, due to the default
     /// parallel implementation.

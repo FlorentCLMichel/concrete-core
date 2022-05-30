@@ -1,18 +1,20 @@
 use concrete_commons::parameters::GlweSize;
 
 use crate::backends::fftw::engines::FftwEngine;
+use crate::backends::fftw::default::{
+    GlweCiphertext32, GlweCiphertext64,
+};
 use crate::backends::fftw::entities::{
-    FourierGlweCiphertext32, FourierGlweCiphertext64, GlweCiphertext32, GlweCiphertext64,
+    FftwFourierGlweCiphertext32, FftwFourierGlweCiphertext64,
 };
 use crate::backends::fftw::private::crypto::bootstrap::FourierBuffers;
-use crate::backends::fftw::private::crypto::glwe::{
-    FourierGlweCiphertext as ImplFourierGlweCiphertext,
-};
-use crate::commons::crypto::glwe::{
-    GlweCiphertext as ImplGlweCiphertext,
-};
+use crate::backends::fftw::private::crypto::glwe::FourierGlweCiphertext as ImplFourierGlweCiphertext;
 use crate::backends::fftw::private::math::fft::Complex64;
-use crate::prelude::{GlweCiphertext32, GlweCiphertext64, GlweCiphertextTensorProductSameKeyEngine, GlweCiphertextTensorProductSameKeyError, ScalingFactor};
+use crate::commons::crypto::glwe::GlweCiphertext as ImplGlweCiphertext;
+use crate::prelude::{
+    GlweCiphertext32, GlweCiphertext64, GlweCiphertextTensorProductSameKeyEngine,
+    GlweCiphertextTensorProductSameKeyError, ScalingFactor,
+};
 use crate::specification::entities::GlweCiphertextEntity;
 
 /// # Description:
@@ -29,7 +31,11 @@ impl GlweCiphertextTensorProductSameKeyEngine<GlweCiphertext32, GlweCiphertext32
     ) -> Result<GlweCiphertext32, GlweCiphertextTensorProductSameKeyError<Self::EngineError>> {
         GlweCiphertextTensorProductSameKeyError::perform_generic_checks(input1, input2)?;
         // TODO check the scale is lower or equal to MAX U32
-        Ok(unsafe { self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale) })
+        Ok(
+            unsafe {
+                self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale)
+            },
+        )
     }
 
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
@@ -58,7 +64,7 @@ impl GlweCiphertextTensorProductSameKeyEngine<GlweCiphertext32, GlweCiphertext32
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 64-bit
+/// Implementation of [`GlweTensorProductSameKeyEngine`] for [`FftwEngine`] that operates on 64-bit
 /// integer GLWE Ciphertexts.
 impl GlweCiphertextTensorProductSameKeyEngine<GlweCiphertext64, GlweCiphertext64, GlweCiphertext64>
     for FftwEngine
@@ -70,7 +76,11 @@ impl GlweCiphertextTensorProductSameKeyEngine<GlweCiphertext64, GlweCiphertext64
         scale: ScalingFactor,
     ) -> Result<GlweCiphertext64, GlweCiphertextTensorProductSameKeyError<Self::EngineError>> {
         GlweCiphertextTensorProductSameKeyError::perform_generic_checks(input1, input2)?;
-        Ok(unsafe { self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale) })
+        Ok(
+            unsafe {
+                self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale)
+            },
+        )
     }
 
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
@@ -99,7 +109,7 @@ impl GlweCiphertextTensorProductSameKeyEngine<GlweCiphertext64, GlweCiphertext64
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 32-bit
+/// Implementation of [`GlweTensorProductSameKeyEngine`] for [`FftwEngine`] that operates on 32-bit
 /// integer GLWE Ciphertexts in the Fourier domain.
 impl
     GlweCiphertextTensorProductSameKeyEngine<
@@ -113,10 +123,15 @@ impl
         input1: &FourierGlweCiphertext32,
         input2: &FourierGlweCiphertext32,
         scale: ScalingFactor,
-    ) -> Result<FourierGlweCiphertext32, GlweCiphertextTensorProductSameKeyError<Self::EngineError>> {
+    ) -> Result<FourierGlweCiphertext32, GlweCiphertextTensorProductSameKeyError<Self::EngineError>>
+    {
         GlweCiphertextTensorProductSameKeyError::perform_generic_checks(input1, input2)?;
         // TODO check that scale is <= MAX U32
-        Ok(unsafe { self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale) })
+        Ok(
+            unsafe {
+                self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale)
+            },
+        )
     }
 
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
@@ -126,12 +141,16 @@ impl
         scale: ScalingFactor,
     ) -> FourierGlweCiphertext32 {
         // perform the tensor product (in the fourier domain)
-        FourierGlweCiphertext32(input1.0.tensor_product_same_key_fourier_input(&input2.0, scale))
+        FourierGlweCiphertext32(
+            input1
+                .0
+                .tensor_product_same_key_fourier_input(&input2.0, scale),
+        )
     }
 }
 
 /// # Description:
-/// Implementation of [`GlweTensorProductEngine`] for [`FftwEngine`] that operates on 64-bit
+/// Implementation of [`GlweTensorProductSameKeyEngine`] for [`FftwEngine`] that operates on 64-bit
 /// integer GLWE Ciphertexts in the Fourier domain.
 impl
     GlweCiphertextTensorProductSameKeyEngine<
@@ -145,9 +164,14 @@ impl
         input1: &FourierGlweCiphertext64,
         input2: &FourierGlweCiphertext64,
         scale: ScalingFactor,
-    ) -> Result<FourierGlweCiphertext64, GlweCiphertextTensorProductSameKeyError<Self::EngineError>> {
+    ) -> Result<FourierGlweCiphertext64, GlweCiphertextTensorProductSameKeyError<Self::EngineError>>
+    {
         GlweCiphertextTensorProductSameKeyError::perform_generic_checks(input1, input2)?;
-        Ok(unsafe { self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale) })
+        Ok(
+            unsafe {
+                self.tensor_product_glwe_ciphertext_same_key_unchecked(input1, input2, scale)
+            },
+        )
     }
 
     unsafe fn tensor_product_glwe_ciphertext_same_key_unchecked(
@@ -157,6 +181,10 @@ impl
         scale: ScalingFactor,
     ) -> FourierGlweCiphertext64 {
         // perform the tensor product (in the fourier domain)
-        FourierGlweCiphertext64(input1.0.tensor_product_same_key_fourier_input(&input2.0, scale))
+        FourierGlweCiphertext64(
+            input1
+                .0
+                .tensor_product_same_key_fourier_input(&input2.0, scale),
+        )
     }
 }
