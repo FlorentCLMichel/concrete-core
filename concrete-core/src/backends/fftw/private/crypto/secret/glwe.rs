@@ -4,8 +4,8 @@ use crate::commons::crypto::secret::GlweSecretKey;
 use crate::commons::math::tensor::{ck_dim_div, AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, Tensor, IntoTensor};
 use crate::commons::math::torus::UnsignedTorus;
 use crate::prelude::{
-    GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind,
-};
+    GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind, BinaryKeyKind,
+    TernaryKeyKind};
 use std::marker::PhantomData;
 use crate::commons::math::polynomial::PolynomialList;
 
@@ -324,40 +324,87 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     }
 
     pub fn create_tensor_product_key<OutputCont>(
-        &mut self,
+        & self,
     ) -> GlweSecretKey<TensorProductKeyKind, OutputCont>
     where
         Self: AsRefTensor<Element = Scalar>,
     {
+
         // TODO do the conversions to the Fourier domain and back like the tensor product on
         //   ciphertexts
 
-        // TODO check allocation size
-        let mut output_list = PolynomialList::allocate(
-            0 as u32,
-            PolynomialCount(self.polynomial_size().0),
-            self.polynomial_size(),
+        let mut fourier_key =
+            FourierGlweSecretKey::allocate(Complex64::new(0., 0.),
+                                            self.poly_size,
+                                           self.glwe_dimension());
+
+        let mut buffers = FourierBuffers::new(self.poly_size,
+                                          self.glwe_size());
+
+        fourier_key.fill_with_forward_fourier(self.0, &mut buffers);
+
+        let mut iter_key1 = fourier_key.polynomial_iter();
+        let mut iter_key2 = fourier_key.polynomial_iter();
+
+        let k = self.glwe_size().0;
+        let mut output = FourierGlweSecretKey::allocate(
+            Complex64::new(0., 0.),
+            self.poly_size,
+            GlweDimension(k + k * (k - 1) / 2 + k),
         );
 
-        {
-            let mut iter_output = output_list.polynomial_iter_mut();
+        let mut iter_output = output.polynomial_iter();
 
-            // fill the output of the iterator up with the correct product/s
-            for (i, polynomial1) in self.polynomial_iter().enumerate() {
-                for (j, polynomial2) in self.polynomial_iter().enumerate() {
+        let fourier_one = FourierPolynomial::allocate()
+
+        for (i, polyi) in iter_key1.enumerate(){
+            for (j, polyj) in iter_key2.enumerate(){
+                if(i == j) {
                     let mut output_poly1 = iter_output.next().unwrap();
-                    // TODO: correct the below, we need s_i, s_is_j, s_i^2 terms in the same order
-                    //output_poly1.fill_with_karatsuba_mul(&polynomial1, &polynomial2);
+                    // we create the key terms of the form s_{i}^2
+                    output_poly1.update_with_multiply_accumulate(&polyi, &polyj);
+
+                    let mut output_poly1 = iter_output.next().unwrap();
+                    // in this case we just need s_i, so we can access the original coefficient
+                    output_poly1 = fourier_key[i];
+                }
+
+                else {
+                    // else condition means i != j
+                    if j < i {
+                        let mut output_poly1 = iter_output.next().unwrap();
+                        // we create the key terms of the form s_{i}s_{j}
+                        output_poly1.update_with_multiply_accumulate(&polyi, &polyj);
+                    }
                 }
             }
         }
-        // TODO match against the key kind
-        let tensor_key = GlweSecretKey::binary_from_container(
-            output_list.as_tensor().as_slice().to_vec(),
-            self.polynomial_size(),
-        );
 
-        tensor_key
+        // we convert back to the standard domain
+        // TODO: should we use allocated here?
+
+        let output_key = GlweSecretKey::generate_binary(
+            self.glwe_dimension(),
+            self.poly_size);
+
+        let mut secret_generator = new_secret_random_generator();
+        match self._kind{
+            BinaryKeyKind => {
+                let output_key = GlweSecretKey::generate_binary(
+                    GlweDimension(k + k * (k - 1) / 2 + k),
+                    self.poly_size,
+                    &mut secret_generator);
+            }
+            TernaryKeyKind => {
+                let output_key = GlweSecretKey::generate_ternary(
+                    GlweDimension(k + k * (k - 1) / 2 + k),
+                    self.poly_size,
+                    &mut secret_generator);
+            }
+
+        }
+        output.fill_with_backward_fourier(output_key, buffers);
+        output_key
     }
 }
 
