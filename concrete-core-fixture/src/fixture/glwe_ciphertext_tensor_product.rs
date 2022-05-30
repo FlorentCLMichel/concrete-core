@@ -14,7 +14,7 @@ use concrete_core::prelude::markers::{
 use concrete_core::prelude::numeric::{CastInto, UnsignedInteger};
 use concrete_core::prelude::{
     BinaryKeyKind, DispersionParameter, GaussianKeyKind, GlweCiphertextEntity,
-    GlweCiphertextTensorProductEngine, ScalingFactor, TernaryKeyKind,
+    GlweCiphertextTensorProductSameKeyEngine, ScalingFactor, TernaryKeyKind,
 };
 use std::any::TypeId;
 
@@ -38,7 +38,7 @@ impl<Precision, Engine, CiphertextIn1, CiphertextIn2, CiphertextOut>
     for GlweCiphertextTensorProductFixture
 where
     Precision: IntegerPrecision,
-    Engine: GlweCiphertextTensorProductEngine<CiphertextIn1, CiphertextIn2, CiphertextOut>,
+    Engine: GlweCiphertextTensorProductSameKeyEngine<CiphertextIn1, CiphertextIn2, CiphertextOut>,
     CiphertextIn1: GlweCiphertextEntity,
     CiphertextIn2: GlweCiphertextEntity<KeyDistribution = CiphertextIn1::KeyDistribution>,
     CiphertextOut: GlweCiphertextEntity<KeyDistribution = CiphertextIn1::KeyDistribution>,
@@ -154,7 +154,7 @@ where
     ) -> Self::PostExecutionContext {
         let (proto_ciphertext1, proto_ciphertext2) = context;
         let output_ciphertext = unsafe {
-            engine.tensor_product_glwe_ciphertext_unchecked(
+            engine.tensor_product_glwe_ciphertext_same_key_unchecked(
                 &proto_ciphertext1,
                 &proto_ciphertext2,
                 std::cmp::min(parameters.scaling_factor_1, parameters.scaling_factor_2),

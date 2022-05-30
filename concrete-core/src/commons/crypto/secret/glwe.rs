@@ -15,8 +15,8 @@ use crate::commons::math::random::ParallelByteRandomGenerator;
 use crate::commons::math::random::{ByteRandomGenerator, Gaussian, RandomGenerable};
 use crate::commons::math::torus::UnsignedTorus;
 use concrete_commons::dispersion::DispersionParameter;
-use concrete_commons::key_kinds::{
-    BinaryKeyKind, GaussianKeyKind, KeyKind, TernaryKeyKind, UniformKeyKind,
+use crate::prelude::key_kinds::{
+    BinaryKeyKind, GaussianKeyKind, KeyKind, TernaryKeyKind, UniformKeyKind, TensorProductKeyKind,
 };
 use concrete_commons::numeric::Numeric;
 use concrete_commons::parameters::{GlweDimension, PlaintextCount, PolynomialSize};
@@ -26,7 +26,6 @@ use rayon::{iter::IndexedParallelIterator, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::ops::Add;
-use crate::prelude::PolynomialCount;
 
 /// A GLWE secret key
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
@@ -1038,54 +1037,6 @@ where
                 *first_coef = first_coef.wrapping_add(decomposition);
             }
         }
-    }
-    
-    pub fn create_tensor_product_key<GlweCont1, GlweCont2, Scalar>(
-        &mut self,
-        glwe_secret_key: &GlweSecretKey<Kind, GlweCont1>,
-        tensor_glwe_secret_key: &GlweSecretKey<TensorProductKeyDistribution, GlweCont2>,
-    ) where
-        Self<Kind, Cont>: AsRefTensor<Element = Scalar>,
-        GlweSecretKey<Kind, GlweCont1>: AsRefTensor<Element = Scalar>,
-        GlweSecretKey<TensorProductKeyDistribution, GlweCont2>: AsMutTensor<Element = Scalar>,
-        Scalar: UnsignedTorus,
-    {
-        ck_dim_eq!(self.glwe_size().0 => glwe_secret_key.glwe_size().0);
-        ck_dim_eq!(self.glwe_size().0 => tensor_glwe_secret_key.glwe_size().0);
-        // TODO check poly_size also
-
-        // TODO here add the implementation
-        // .0 accesses the inner value, i.e. the underlying key wrapped in the GlweSecretKey32
-        let input_list_1 = self.0.as_polynomial_list();
-        let input_list_2 = glwe_secret_key.0.as_polynomial_list();
-
-        // TODO do the allocation in the implementation
-        //let mut output_list = PolynomialList::allocate(0 as u32,
-        //                                               PolynomialCount(glwe_secret_key.0
-        //                                                   .polynomial_size().0),
-        //                                               glwe_secret_key.0.polynomial_size());
-        let mut output_list = tensor_glwe_secret_key.0.as_mut_polynomial_list();
-
-        // create iterators over the two polynomial lists, as well as an output
-        {
-            let mut iter_output = output_list.polynomial_iter_mut();
-            let iterator_1 = input_list_1.polynomial_iter();
-
-            // fill the output of the iterator up with the correct product/s
-            for (i, polynomial1) in iterator_1.enumerate() {
-                for (j, polynomial2) in input_list_2.polynomial_iter().enumerate() {
-                    let mut output_poly1 = iter_output.next().unwrap();
-                    // TODO: correct the below, we need s_i, s_is_j, s_i^2 terms in the same order
-                    output_poly1.fill_with_karatsuba_mul(&polynomial1, &polynomial2);
-                }
-            }
-        }
-        let tensor_key =
-            ImplGlweSecretKey::binary_from_container(output_list.as_tensor().as_slice().to_vec(),
-                                                     glwe_secret_key.0.polynomial_size());
-
-
-        GlweSecretKey(tensor_key)
     }
 }
 

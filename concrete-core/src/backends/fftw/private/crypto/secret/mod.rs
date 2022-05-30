@@ -1,4 +1,4 @@
 //! GLWE encryption scheme
 
-mod fourier;
-pub use fourier::*;
+mod glwe;
+pub use glwe::*;

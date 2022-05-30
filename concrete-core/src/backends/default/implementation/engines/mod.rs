@@ -62,8 +62,8 @@ pub mod parallel {
     use concrete_csprng::seeders::Seeder;
 
     use crate::commons::crypto::secret::generators::EncryptionRandomGenerator as ImplEncryptionRandomGenerator;
-    use crate::specification::engines::sealed::AbstractEngineSeal;
     use crate::specification::engines::AbstractEngine;
+    use crate::specification::engines::sealed::AbstractEngineSeal;
 
     /// The error which can occur in the execution of FHE operations, due to the default
     /// parallel implementation.
@@ -134,7 +134,6 @@ mod glwe_ciphertext_vector_zero_encryption;
 mod glwe_ciphertext_zero_encryption;
 mod glwe_secret_key_creation;
 mod glwe_to_lwe_secret_key_transmutation;
-mod glwe_secret_key_tensor_product;
 mod lwe_bootstrap_key_creation;
 mod lwe_ciphertext_cleartext_discarding_multiplication;
 mod lwe_ciphertext_cleartext_fusing_multiplication;
