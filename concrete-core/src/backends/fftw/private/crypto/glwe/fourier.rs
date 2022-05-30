@@ -70,8 +70,8 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     /// assert_eq!(glwe.polynomial_size(), PolynomialSize(10));
     /// ```
     pub fn from_container(cont: Cont, glwe_size: GlweSize, poly_size: PolynomialSize) -> Self
-    where
-        Cont: AsRefSlice,
+        where
+            Cont: AsRefSlice,
     {
         let tensor = Tensor::from_container(cont);
         ck_dim_div!(tensor.len() => glwe_size.0, poly_size.0);
@@ -116,7 +116,70 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     pub fn polynomial_size(&self) -> PolynomialSize {
         self.poly_size
     }
+    
+    /// Returns an iterator over references to the polynomials contained in the GLWE.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use concrete_commons::parameters::PolynomialSize;
+    /// use concrete_core::commons::math::polynomial::PolynomialList;
+    /// let mut list =
+    ///     PolynomialList::from_container(vec![1u8, 2, 3, 4, 5, 6, 7, 8], PolynomialSize(2));
+    /// for polynomial in list.polynomial_iter() {
+    ///     assert_eq!(polynomial.polynomial_size(), PolynomialSize(2));
+    /// }
+    /// assert_eq!(list.polynomial_iter().count(), 4);
+    /// ```
+    pub fn polynomial_iter(
+        &self,
+    ) -> impl Iterator<Item = FourierPolynomial<&[<Self as AsRefTensor>::Element]>>
+        where
+            Self: AsRefTensor,
+    {
+        self.as_tensor()
+            .subtensor_iter(self.poly_size.0)
+            .map(FourierPolynomial::from_tensor)
+    }
 
+    /// Returns an iterator over mutable references to the polynomials contained in the list.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use concrete_commons::parameters::{MonomialDegree, PolynomialSize};
+    /// use concrete_core::commons::math::polynomial::PolynomialList;
+    /// let mut list =
+    ///     PolynomialList::from_container(vec![1u8, 2, 3, 4, 5, 6, 7, 8], PolynomialSize(2));
+    /// for mut polynomial in list.polynomial_iter_mut() {
+    ///     polynomial
+    ///         .get_mut_monomial(MonomialDegree(0))
+    ///         .set_coefficient(10u8);
+    ///     assert_eq!(polynomial.polynomial_size(), PolynomialSize(2));
+    /// }
+    /// for polynomial in list.polynomial_iter() {
+    ///     assert_eq!(
+    ///         *polynomial.get_monomial(MonomialDegree(0)).get_coefficient(),
+    ///         10u8
+    ///     );
+    /// }
+    /// assert_eq!(list.polynomial_iter_mut().count(), 4);
+    /// ```
+    pub fn polynomial_iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = FourierPolynomial<&mut [<Self as AsMutTensor>::Element]>>
+        where
+            Self: AsMutTensor,
+    {
+        let chunks_size = self.poly_size.0;
+        self.as_mut_tensor()
+            .subtensor_iter_mut(chunks_size)
+            .map(FourierPolynomial::from_tensor)
+    }
+
+}
+
+impl<Scalar: UnsignedTorus> FourierGlweCiphertext<AlignedVec<Complex64>, Scalar> {
     /// Fills a Fourier GLWE ciphertext with the Fourier transform of a GLWE ciphertext in
     /// coefficient domain.
     ///
@@ -140,7 +203,6 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
         glwe: &GlweCiphertext<InputCont>,
         buffers: &mut FourierBuffers<Scalar>,
     ) where
-        Cont: AsMutSlice<Element = Complex64>,
         GlweCiphertext<InputCont>: AsRefTensor<Element = Scalar>,
         Scalar: UnsignedTorus,
     {
@@ -186,7 +248,6 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
         glwe: &mut GlweCiphertext<InputCont>,
         buffers: &mut FourierBuffers<Scalar>,
     ) where
-        Cont: AsMutSlice<Element = Complex64>,
         GlweCiphertext<InputCont>: AsMutTensor<Element = Scalar_>,
         Scalar_: UnsignedTorus,
     {
@@ -203,66 +264,6 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
         for (mut coef_poly, mut fourier_poly) in iterator {
             fft.backward_as_torus(&mut coef_poly, &mut fourier_poly);
         }
-    }
-
-    /// Returns an iterator over references to the polynomials contained in the GLWE.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use concrete_commons::parameters::PolynomialSize;
-    /// use concrete_core::commons::math::polynomial::PolynomialList;
-    /// let mut list =
-    ///     PolynomialList::from_container(vec![1u8, 2, 3, 4, 5, 6, 7, 8], PolynomialSize(2));
-    /// for polynomial in list.polynomial_iter() {
-    ///     assert_eq!(polynomial.polynomial_size(), PolynomialSize(2));
-    /// }
-    /// assert_eq!(list.polynomial_iter().count(), 4);
-    /// ```
-    pub fn polynomial_iter(
-        &self,
-    ) -> impl Iterator<Item = FourierPolynomial<&[<Self as AsRefTensor>::Element]>>
-    where
-        Self: AsRefTensor,
-    {
-        self.as_tensor()
-            .subtensor_iter(self.poly_size.0)
-            .map(FourierPolynomial::from_tensor)
-    }
-
-    /// Returns an iterator over mutable references to the polynomials contained in the list.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use concrete_commons::parameters::{MonomialDegree, PolynomialSize};
-    /// use concrete_core::commons::math::polynomial::PolynomialList;
-    /// let mut list =
-    ///     PolynomialList::from_container(vec![1u8, 2, 3, 4, 5, 6, 7, 8], PolynomialSize(2));
-    /// for mut polynomial in list.polynomial_iter_mut() {
-    ///     polynomial
-    ///         .get_mut_monomial(MonomialDegree(0))
-    ///         .set_coefficient(10u8);
-    ///     assert_eq!(polynomial.polynomial_size(), PolynomialSize(2));
-    /// }
-    /// for polynomial in list.polynomial_iter() {
-    ///     assert_eq!(
-    ///         *polynomial.get_monomial(MonomialDegree(0)).get_coefficient(),
-    ///         10u8
-    ///     );
-    /// }
-    /// assert_eq!(list.polynomial_iter_mut().count(), 4);
-    /// ```
-    pub fn polynomial_iter_mut(
-        &mut self,
-    ) -> impl Iterator<Item = FourierPolynomial<&mut [<Self as AsMutTensor>::Element]>>
-    where
-        Self: AsMutTensor,
-    {
-        let chunks_size = self.poly_size.0;
-        self.as_mut_tensor()
-            .subtensor_iter_mut(chunks_size)
-            .map(FourierPolynomial::from_tensor)
     }
 
     /// Returns the tensor product of two Fourier GLWE ciphertexts
@@ -361,6 +362,7 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
     ) -> GlweCiphertext<Vec<Scalar>>
     where
         Self: AsRefTensor<Element = Complex64>,
+        GlweCiphertext<Container>: AsRefTensor<Element = Scalar>,
     {
         // We check that the polynomial sizes match
         ck_dim_eq!(
@@ -371,21 +373,23 @@ impl<Cont, Scalar: UnsignedTorus> FourierGlweCiphertext<Cont, Scalar> {
         // We check that the glwe sizes match
         ck_dim_eq!(
             self.glwe_size() =>
-            glwe.glwe_size(),
+            glwe.size(),
             self.glwe_size()
         );
 
         let mut output = GlweCiphertext::allocate(
             Scalar::ZERO,
             self.polynomial_size(),
-            GlweSize(self.glwe_dimension().0 * (3 + self.glwe_dimension().0) * (1 / 2)),
+            GlweSize(self.glwe_size().to_glwe_dimension().0 * (3 + self.glwe_size()
+                .to_glwe_dimension().0) * (1 /
+                2)),
         );
         let mut fourier_2 = FourierGlweCiphertext::allocate(
             Complex64::new(0., 0.),
             self.polynomial_size(),
-            GlweSize(self.glwe_dimension().0),
+            GlweSize(self.glwe_size().to_glwe_dimension().0),
         );
-        fourier_2.fill_with_forward_fourier(&glwe.0, &mut buffers);
+        fourier_2.fill_with_forward_fourier(&glwe, &mut buffers);
         let mut fourier_output = self.tensor_product_same_key_fourier_input(&fourier_2, scale);
 
         // convert the result back to the coefficient domain

@@ -19,7 +19,7 @@ pub struct GaussianKeyKind;
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
 pub struct UniformKeyKind;
 /// This type is a marker for keys generated doing the tensor product of one key with itself.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
 pub struct TensorProductKeyKind;
 
