@@ -116,12 +116,12 @@ where
         let proto_ciphertext1 = maker.encrypt_plaintext_vector_to_glwe_ciphertext(
             proto_secret_key,
             &proto_plaintext_vector1,
-            parameters.noise_glwe_1,
+            parameters.noise,
         );
         let proto_ciphertext2 = maker.encrypt_plaintext_vector_to_glwe_ciphertext(
             proto_secret_key,
             &proto_plaintext_vector2,
-            parameters.noise_glwe_2,
+            parameters.noise,
         );
         (proto_ciphertext1, proto_ciphertext2)
     }
@@ -129,7 +129,6 @@ where
     fn prepare_context(
         _parameters: &Self::Parameters,
         maker: &mut Maker,
-        // clippy convention: this variable will not be used (_varname)
         _repetition_proto: &Self::RepetitionPrototypes,
         sample_proto: &Self::SamplePrototypes,
     ) -> Self::PreExecutionContext {
@@ -150,7 +149,7 @@ where
             engine.tensor_product_glwe_ciphertext_same_key_unchecked(
                 &proto_ciphertext1,
                 &proto_ciphertext2,
-                std::cmp::min(parameters.scaling_factor_1, parameters.scaling_factor_2),
+                std::cmp::min(parameters.scaling_factor, parameters.scaling_factor),
             )
         };
         (proto_ciphertext1, proto_ciphertext2, output_ciphertext)
@@ -176,7 +175,7 @@ where
             &proto_output_ciphertext,
         );
 
-        let scale = std::cmp::min(parameters.scaling_factor_1, parameters.scaling_factor_2);
+        let scale = std::cmp::min(parameters.scaling_factor, parameters.scaling_factor);
         let raw_input_plaintext_vector1 =
             maker.transform_plaintext_vector_to_raw_vec(proto_plaintext_vector1);
         let raw_input_plaintext_vector2 =
@@ -220,12 +219,12 @@ where
         >(
             parameters.polynomial_size,
             parameters.glwe_dimension,
-            parameters.noise_glwe_1,
-            parameters.noise_glwe_2,
-            parameters.scaling_factor_1.0 as f64,
-            parameters.scaling_factor_2.0 as f64,
-            parameters.msg_bound_1,
-            parameters.msg_bound_2,
+            parameters.noise,
+            parameters.noise,
+            parameters.scaling_factor.0 as f64,
+            parameters.scaling_factor.0 as f64,
+            parameters.msg_bound,
+            parameters.msg_bound,
         );
         (output_variance,)
     }
