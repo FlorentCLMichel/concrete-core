@@ -3,11 +3,10 @@ use crate::backends::fftw::private::math::fft::{AlignedVec, Complex64, FourierPo
 use crate::commons::crypto::secret::GlweSecretKey;
 use crate::commons::math::tensor::{ck_dim_div, AsMutSlice, AsMutTensor, AsRefSlice, AsRefTensor, Tensor, IntoTensor};
 use crate::commons::math::torus::UnsignedTorus;
-use crate::prelude::{
-    GlweDimension, KeyKind, PolynomialCount, PolynomialSize, TensorProductKeyKind, BinaryKeyKind,
-    TernaryKeyKind};
+use crate::prelude::{GlweDimension, KeyKind, PolynomialSize, TensorProductKeyKind, BinaryKeyKind, TernaryKeyKind, GlweSecretKeyEntity};
 use std::marker::PhantomData;
-use crate::commons::math::polynomial::PolynomialList;
+use serde::{Deserialize, Serialize};
+use crate::commons::test_tools::new_secret_random_generator;
 
 /// A GLWE secret key in the Fourier Domain.
 #[cfg_attr(feature = "serde_serialize", derive(Serialize, Deserialize))]
@@ -160,6 +159,7 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::commons::crypto::secret::GlweSecretKey;
     /// use concrete_core::commons::math::random::Seed;
     /// use concrete_core::prelude::BinaryKeyKind;
+    /// use concrete_csprng::generators::SoftwareRandomGenerator;
     /// let mut fourier_glwe_key: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
     ///     FourierGlweSecretKey::allocate(
     ///         Complex64::new(0., 0.),
@@ -211,6 +211,7 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
     /// use concrete_core::commons::crypto::secret::GlweSecretKey;
     /// use concrete_core::commons::math::random::Seed;
     /// use concrete_core::prelude::BinaryKeyKind;
+    /// use concrete_csprng::generators::SoftwareRandomGenerator;
     ///
     /// let mut fourier_glwe: FourierGlweSecretKey<BinaryKeyKind, _, u32> =
     ///     FourierGlweSecretKey::allocate(
@@ -323,8 +324,12 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
             .map(FourierPolynomial::from_tensor)
     }
 
-    pub fn create_tensor_product_key<OutputCont>(
+
+    // create_binary_...
+    // create_ternary...?
+    pub fn create_tensor_product_key<OutputCont, KeyKind>(
         & self,
+        // Kind added
     ) -> GlweSecretKey<TensorProductKeyKind, OutputCont>
     where
         Self: AsRefTensor<Element = Scalar>,
@@ -339,14 +344,14 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
                                            self.glwe_dimension());
 
         let mut buffers = FourierBuffers::new(self.poly_size,
-                                          self.glwe_size());
+                                          self.glwe_dimension().to_glwe_size());
 
-        fourier_key.fill_with_forward_fourier(self.0, &mut buffers);
+        fourier_key.fill_with_forward_fourier(&self, &mut buffers);
 
         let mut iter_key1 = fourier_key.polynomial_iter();
         let mut iter_key2 = fourier_key.polynomial_iter();
 
-        let k = self.glwe_size().0;
+        let k = self.glwe_dimension().0;
         let mut output = FourierGlweSecretKey::allocate(
             Complex64::new(0., 0.),
             self.poly_size,
@@ -355,11 +360,9 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
 
         let mut iter_output = output.polynomial_iter();
 
-        let fourier_one = FourierPolynomial::allocate()
-
         for (i, polyi) in iter_key1.enumerate(){
             for (j, polyj) in iter_key2.enumerate(){
-                if(i == j) {
+                if i == j {
                     let mut output_poly1 = iter_output.next().unwrap();
                     // we create the key terms of the form s_{i}^2
                     output_poly1.update_with_multiply_accumulate(&polyi, &polyj);
@@ -380,16 +383,18 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
             }
         }
 
-        // we convert back to the standard domain
+        // we convert back to the standard domain -- attempting to match key types
         // TODO: should we use allocated here?
 
-        let output_key = GlweSecretKey::generate_binary(
-            self.glwe_dimension(),
-            self.poly_size);
-
         let mut secret_generator = new_secret_random_generator();
-        match self._kind{
+
+       // let distr = <self as FourierGlweSecretKey>::Kind;
+
+        match KeyKind{
             BinaryKeyKind => {
+                /// The output key needs to be a tensor product key -- can we skip match?
+                /// instead we do
+                /// let output_key = GlweSecretKey::allocate_tensorproduct or generate_tensorproduct
                 let output_key = GlweSecretKey::generate_binary(
                     GlweDimension(k + k * (k - 1) / 2 + k),
                     self.poly_size,
@@ -403,7 +408,8 @@ impl<Kind, Cont, Scalar: UnsignedTorus> FourierGlweSecretKey<Kind, Cont, Scalar>
             }
 
         }
-        output.fill_with_backward_fourier(output_key, buffers);
+        output.fill_with_backward_fourier(& output_key, buffers);
+        // TODO: we need to return a tensorproductkey
         output_key
     }
 }
